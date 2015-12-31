@@ -1,0 +1,92 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+    <PropertyGroup>
+        <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+        <SchemaVersion>2.0</SchemaVersion>
+        <ProjectGuid>{ca330256-eafd-449e-a685-de9b26ab97c3}</ProjectGuid>
+        <ProjectHome />
+        <StartupFile>setup.py</StartupFile>
+        <SearchPath />
+        <WorkingDirectory>.</WorkingDirectory>
+        <OutputPath>.</OutputPath>
+        <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>
+        <VSToolsPath Condition="'$(VSToolsPath)' == ''">$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)</VSToolsPath>
+    </PropertyGroup>
+    <PropertyGroup Condition="'$(Configuration)' == 'Debug'" />
+    <PropertyGroup Condition="'$(Configuration)' == 'Release'" />
+    <ItemGroup>
+        <Content Include="requirements.txt" />
+        <Compile Include="setup.py" />
+        <Compile Include="docs\conf.py" />
+        <Compile Include="flask_wtf\csrf.py" />
+        <Compile Include="flask_wtf\file.py" />
+        <Compile Include="flask_wtf\form.py" />
+        <Compile Include="flask_wtf\html5.py" />
+        <Compile Include="flask_wtf\i18n.py" />
+        <Compile Include="flask_wtf\_compat.py" />
+        <Compile Include="flask_wtf\__init__.py" />
+        <Content Include="tests\flask.txt" />
+        <Content Include="tests\flask.png" />
+        <Compile Include="tests\base.py" />
+        <Compile Include="tests\test_csrf.py" />
+        <Compile Include="tests\test_html5.py" />
+        <Compile Include="tests\test_i18n.py" />
+        <Compile Include="tests\test_recaptcha.py" />
+        <Compile Include="tests\test_uploads.py" />
+        <Compile Include="tests\test_validation.py" />
+        <Compile Include="tests\__init__.py" />
+        <Content Include="docs\_static\flask-wtf.png" />
+        <Content Include="docs\_templates\brand.html" />
+        <Content Include="docs\_templates\useful-links.html" />
+        <Compile Include="docs\_themes\flask_theme_support.py" />
+        <Content Include="docs\_themes\flask\layout.html" />
+        <Content Include="docs\_themes\flask\relations.html" />
+        <Content Include="docs\_themes\flask\static\flasky.css_t" />
+        <Compile Include="examples\babel\app.py" />
+        <Content Include="examples\flaskr\requirements.txt" />
+        <Compile Include="examples\flaskr\flaskr.py" />
+        <Compile Include="examples\flaskr\flaskr_tests.py" />
+        <Compile Include="examples\recaptcha\app.py" />
+        <Compile Include="examples\uploadr\app.py" />
+        <Content Include="examples\babel\templates\index.html" />
+        <Content Include="examples\flaskr\static\style.css" />
+        <Content Include="examples\flaskr\templates\layout.html" />
+        <Content Include="examples\flaskr\templates\login.html" />
+        <Content Include="examples\flaskr\templates\show_entries.html" />
+        <Content Include="examples\recaptcha\templates\index.html" />
+        <Content Include="examples\uploadr\templates\index.html" />
+        <Compile Include="flask_wtf\recaptcha\fields.py" />
+        <Compile Include="flask_wtf\recaptcha\validators.py" />
+        <Compile Include="flask_wtf\recaptcha\widgets.py" />
+        <Compile Include="flask_wtf\recaptcha\__init__.py" />
+        <Content Include="tests\templates\csrf_macro.html" />
+        <Content Include="tests\templates\csrf.html" />
+        <Content Include="tests\templates\hidden.html" />
+        <Content Include="tests\templates\import_csrf.html" />
+        <Content Include="tests\templates\index.html" />
+        <Content Include="tests\templates\recaptcha.html" />
+        <Content Include="tests\templates\upload.html" />
+    </ItemGroup>
+    <ItemGroup>
+        <Folder Include="docs" />
+        <Folder Include="docs\_static" />
+        <Folder Include="docs\_templates" />
+        <Folder Include="docs\_themes" />
+        <Folder Include="docs\_themes\flask" />
+        <Folder Include="docs\_themes\flask\static" />
+        <Folder Include="examples\babel" />
+        <Folder Include="examples\babel\templates" />
+        <Folder Include="examples\flaskr" />
+        <Folder Include="examples\flaskr\static" />
+        <Folder Include="examples\flaskr\templates" />
+        <Folder Include="examples\recaptcha" />
+        <Folder Include="examples\recaptcha\templates" />
+        <Folder Include="examples\uploadr" />
+        <Folder Include="examples\uploadr\templates" />
+        <Folder Include="flask_wtf" />
+        <Folder Include="flask_wtf\recaptcha" />
+        <Folder Include="tests" />
+        <Folder Include="tests\templates" />
+    </ItemGroup>
+    <Import Project="$(MSBuildToolsPath)\Microsoft.Common.targets" />
+</Project>

@@ -7,7 +7,7 @@ from flask import request, session, current_app
 from wtforms.fields import HiddenField
 from wtforms.widgets import HiddenInput
 from wtforms.validators import ValidationError
-from wtforms.ext.csrf.form import SecureForm
+from wtforms.form import Form
 from ._compat import text_type, string_types
 from .csrf import generate_csrf, validate_csrf
 
@@ -34,40 +34,60 @@ def _is_hidden(field):
     return False
 
 
-class Form(SecureForm):
+class Form(Form):
     """
     Flask-specific subclass of WTForms **SecureForm** class.
 
     If formdata is not specified, this will use flask.request.form.
     Explicitly pass formdata = None to prevent this.
 
-    :param csrf_context: a session or dict-like object to use when making
-                         CSRF tokens. Default: flask.session.
+    :param meta:       A dictionary as described in the WTForms docs.
+                       
+                       meta["csrf"]:    define whether to use CSRF protection. 
+                                        If False, all csrf behavior is suppressed.
+                                        Default: WTF_CSRF_ENABLED config value
+                       
+                       meta["csrf_secret"]:
+                                        a secret key for building CSRF tokens. 
+                                        If this isn't specified, the form will take 
+                                        the first of these that is defined:
 
-    :param secret_key: a secret key for building CSRF tokens. If this isn't
-                       specified, the form will take the first of these
-                       that is defined:
-
-                       * SECRET_KEY attribute on this class
-                       * WTF_CSRF_SECRET_KEY config of flask app
-                       * SECRET_KEY config of flask app
-                       * session secret key
-
-    :param csrf_enabled: whether to use CSRF protection. If False, all
-                         csrf behavior is suppressed.
-                         Default: WTF_CSRF_ENABLED config value
+                                       * SECRET_KEY attribute on this class
+                                       * WTF_CSRF_SECRET_KEY config of flask app
+                                       * SECRET_KEY config of flask app
+                       meta["csrf_context"]:
+                                        a session or dict-like object to use when 
+                                        making CSRF tokens. 
+                                        Default: flask.session.
     """
 
     SECRET_KEY = None
     TIME_LIMIT = None
 
-    def __init__(self, formdata=_Auto, obj=None, prefix='', csrf_context=None,
-                 secret_key=None, csrf_enabled=None, **kwargs):
+    
 
-        if csrf_enabled is None:
-            csrf_enabled = current_app.config.get('WTF_CSRF_ENABLED', True)
+    def __init__(self, formdata=_Auto, obj=None, prefix='', data=None, meta=None, **kwargs):
 
-        self.csrf_enabled = csrf_enabled
+        if not meta:
+            meta = {}
+
+        if "csrf" not in meta:
+            meta["csrf"]=current_app.config.get('WTF_CSRF_ENABLED', True)
+
+        if meta["csrf"]:
+            if "csrf_secret" not in meta:
+                meta["csrf_secret"] =  getattr(self, "SECRET_KEY", None)
+
+            if not meta["csrf_secret"]:
+                 meta["csrf_secret"] = current_app.config.get('WTF_CSRF_SECRET_KEY', None)
+
+            if not meta["csrf_secret"]:
+                 meta["csrf_secret"] = current_app.config.get('SECRET_KEY', None)
+
+            meta["csrf_secret"]=meta["csrf_secret"].encode()
+
+            if "csrf_context" not in meta:
+                meta["csrf_context"] = session
 
         if formdata is _Auto:
             if self.is_submitted():
@@ -80,22 +100,8 @@ class Form(SecureForm):
             else:
                 formdata = None
 
-        if self.csrf_enabled:
-            if csrf_context is None:
-                csrf_context = session
-            if secret_key is None:
-                # It wasn't passed in, check if the class has a SECRET_KEY
-                secret_key = getattr(self, "SECRET_KEY", None)
 
-            self.SECRET_KEY = secret_key
-        else:
-            csrf_context = {}
-            self.SECRET_KEY = ''
-        super(Form, self).__init__(
-            formdata, obj, prefix,
-            csrf_context=csrf_context,
-            **kwargs
-        )
+        super(Form, self).__init__(formdata, obj, prefix, data, meta, **kwargs)
 
     def generate_csrf_token(self, csrf_context=None):
         if not self.csrf_enabled:
