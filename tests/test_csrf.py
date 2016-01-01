@@ -5,7 +5,7 @@ from flask import Blueprint
 from flask import render_template
 from flask_wtf.csrf import CsrfProtect
 from flask_wtf.csrf import validate_csrf, generate_csrf
-from .base import TestCase, MyForm, to_unicode
+from base import TestCase, MyForm, to_unicode
 
 csrf_token_input = re.compile(
     r'name="csrf_token" type="hidden" value="([0-9a-z#A-Z-\.]*)"'

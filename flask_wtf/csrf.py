@@ -16,6 +16,8 @@ from flask import Blueprint
 from flask import current_app, session, request, abort
 from werkzeug.security import safe_str_cmp
 from ._compat import to_bytes, string_types
+
+from wtforms.csrf.session import SessionCSRF
 try:
     from urlparse import urlparse
 except ImportError:
@@ -24,93 +26,6 @@ except ImportError:
 
 
 __all__ = ('generate_csrf', 'validate_csrf', 'CsrfProtect')
-
-
-def generate_csrf(secret_key=None, time_limit=None, token_key='csrf_token', url_safe=False):
-    """Generate csrf token code.
-
-    :param secret_key: A secret key for mixing in the token,
-                       default is Flask.secret_key.
-    :param time_limit: Token valid in the time limit,
-                       default is 3600s.
-    """
-    if not secret_key:
-        secret_key = current_app.config.get(
-            'WTF_CSRF_SECRET_KEY', current_app.secret_key
-        )
-
-    if not secret_key:
-        raise Exception('Must provide secret_key to use csrf.')
-
-    if time_limit is None:
-        time_limit = current_app.config.get('WTF_CSRF_TIME_LIMIT', 3600)
-
-    if token_key not in session:
-        session[token_key] = hashlib.sha1(os.urandom(64)).hexdigest()
-
-    if time_limit:
-        expires = int(time.time() + time_limit)
-        csrf_build = '%s%s' % (session[token_key], expires)
-    else:
-        expires = ''
-        csrf_build = session[token_key]
-
-    hmac_csrf = hmac.new(
-        to_bytes(secret_key),
-        to_bytes(csrf_build),
-        digestmod=hashlib.sha1
-    ).hexdigest()
-    delimiter = '--' if url_safe else '##'
-    return '%s%s%s' % (expires, delimiter, hmac_csrf)
-
-
-def validate_csrf(data, secret_key=None, time_limit=None, token_key='csrf_token', url_safe=False):
-    """Check if the given data is a valid csrf token.
-
-    :param data: The csrf token value to be checked.
-    :param secret_key: A secret key for mixing in the token,
-                       default is Flask.secret_key.
-    :param time_limit: Check if the csrf token is expired.
-                       default is True.
-    """
-    delimiter = '--' if url_safe else '##'
-    if not data or delimiter not in data:
-        return False
-
-    try:
-        expires, hmac_csrf = data.split(delimiter, 1)
-    except ValueError:
-        return False  # unpack error
-
-    if time_limit is None:
-        time_limit = current_app.config.get('WTF_CSRF_TIME_LIMIT', 3600)
-
-    if time_limit:
-        try:
-            expires = int(expires)
-        except ValueError:
-            return False
-
-        now = int(time.time())
-        if now > expires:
-            return False
-
-    if not secret_key:
-        secret_key = current_app.config.get(
-            'WTF_CSRF_SECRET_KEY', current_app.secret_key
-        )
-
-    if token_key not in session:
-        return False
-
-    csrf_build = '%s%s' % (session[token_key], expires)
-    hmac_compare = hmac.new(
-        to_bytes(secret_key),
-        to_bytes(csrf_build),
-        digestmod=hashlib.sha1
-    ).hexdigest()
-
-    return safe_str_cmp(hmac_compare, hmac_csrf)
 
 
 class CsrfProtect(object):

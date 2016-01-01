@@ -5,7 +5,6 @@ import werkzeug.datastructures
 from flask import request, session, current_app
 from wtforms.validators import ValidationError
 from wtforms.form import Form
-from .csrf import generate_csrf, validate_csrf
 from .widgets import HiddenTag
 
 try:
@@ -105,13 +104,11 @@ class Form(Form):
         return generate_csrf(self.SECRET_KEY, self.TIME_LIMIT)
 
     def validate_csrf_token(self, field):
-        if not self.csrf_enabled:
+        if not self.meta.csrf:
             return True
         if hasattr(request, 'csrf_valid') and request.csrf_valid:
             # this is validated by CsrfProtect
             return True
-        if not validate_csrf(field.data, self.SECRET_KEY, self.TIME_LIMIT):
-            raise ValidationError(field.gettext('CSRF token missing'))
 
     def validate_csrf_data(self, data):
         """Check if the csrf data is valid.

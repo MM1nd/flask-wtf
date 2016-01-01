@@ -6,6 +6,8 @@ from wtforms.validators import DataRequired
 from flask_wtf import Form
 from flask_wtf._compat import text_type
 
+import unittest
+
 
 def to_unicode(text):
     if not isinstance(text, text_type):
@@ -37,13 +39,15 @@ class SimpleForm(Form):
     pass
 
 
-class TestCase(object):
+class TestCase(unittest.TestCase):
+    
     def setUp(self):
         self.app = self.create_app()
         self.client = self.app.test_client()
 
     def create_app(self):
         app = Flask(__name__)
+        app.testing = True
         app.secret_key = "secret"
 
         @app.route("/", methods=("GET", "POST"))

@@ -2,7 +2,7 @@ from __future__ import with_statement
 
 import re
 
-from .base import TestCase, MyForm, to_unicode
+from base import TestCase, MyForm, to_unicode
 
 csrf_token_input = re.compile(
     r'name="csrf_token" type="hidden" value="([0-9a-z#A-Z-\.]*)"'
