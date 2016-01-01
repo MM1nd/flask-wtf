@@ -2,14 +2,11 @@
 
 import werkzeug.datastructures
 
-from jinja2 import Markup, escape
 from flask import request, session, current_app
-from wtforms.fields import HiddenField
-from wtforms.widgets import HiddenInput
 from wtforms.validators import ValidationError
 from wtforms.form import Form
-from ._compat import text_type, string_types
 from .csrf import generate_csrf, validate_csrf
+from .widgets import HiddenTag
 
 try:
     from .i18n import translations
@@ -23,15 +20,6 @@ class _Auto():
     Used when None is a valid option and should not be replaced by a default.
     '''
     pass
-
-
-def _is_hidden(field):
-    """Detect if the field is hidden."""
-    if isinstance(field, HiddenField):
-        return True
-    if isinstance(field.widget, HiddenInput):
-        return True
-    return False
 
 
 class Form(Form):
@@ -103,6 +91,8 @@ class Form(Form):
 
         super(Form, self).__init__(formdata, obj, prefix, data, meta, **kwargs)
 
+        self.csrf_token.widget = HiddenTag()
+
     def generate_csrf_token(self, csrf_context=None):
         if not self.csrf_enabled:
             return None
@@ -133,38 +123,6 @@ class Form(Form):
         """
 
         return request and request.method in ("PUT", "POST")
-
-    def hidden_tag(self, *fields):
-        """
-        Wraps hidden fields in a hidden DIV tag, in order to keep XHTML
-        compliance.
-
-        .. versionadded:: 0.3
-
-        :param fields: list of hidden field names. If not provided will render
-                       all hidden fields, including the CSRF field.
-        """
-
-        if not fields:
-            fields = [f for f in self if _is_hidden(f)]
-
-        name = current_app.config.get('WTF_HIDDEN_TAG', 'div')
-        attrs = current_app.config.get(
-            'WTF_HIDDEN_TAG_ATTRS', {'style': 'display:none;'})
-
-        tag_attrs = u' '.join(
-            u'%s="%s"' % (escape(k), escape(v)) for k, v in attrs.items())
-        tag_start = u'<%s %s>' % (escape(name), tag_attrs)
-        tag_end = u'</%s>' % escape(name)
-
-        rv = [tag_start]
-        for field in fields:
-            if isinstance(field, string_types):
-                field = getattr(self, field)
-            rv.append(text_type(field))
-        rv.append(tag_end)
-
-        return Markup(u"".join(rv))
 
     def validate_on_submit(self):
         """
