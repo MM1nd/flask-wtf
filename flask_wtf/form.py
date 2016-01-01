@@ -33,7 +33,12 @@ class Form(Form):
                        
                        meta["csrf"]:    define whether to use CSRF protection. 
                                         If False, all csrf behavior is suppressed.
-                                        Default: WTF_CSRF_ENABLED config value
+                                        If True, a HiddenInput field csrf_token is created for you.
+                                        That field's widget is set to HiddenTag, so cf.
+                                        the documentation there.
+
+                                        Default: WTF_CSRF_ENABLED config value or,
+                                        if that is not set: True
                        
                        meta["csrf_secret"]:
                                         a secret key for building CSRF tokens. 
@@ -90,8 +95,9 @@ class Form(Form):
 
 
         super(Form, self).__init__(formdata, obj, prefix, data, meta, **kwargs)
-
-        self.csrf_token.widget = HiddenTag()
+        
+        if meta["csrf"]:
+            self.csrf_token.widget = HiddenTag()
 
     def generate_csrf_token(self, csrf_context=None):
         if not self.csrf_enabled:
