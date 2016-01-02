@@ -98,27 +98,6 @@ class Form(Form):
         if meta["csrf"]:
             self.csrf_token.widget = HiddenTag()
 
-    def generate_csrf_token(self, csrf_context=None):
-        if not self.csrf_enabled:
-            return None
-        return generate_csrf(self.SECRET_KEY, self.TIME_LIMIT)
-
-    def validate_csrf_token(self, field):
-        if not self.meta.csrf:
-            return True
-        if hasattr(request, 'csrf_valid') and request.csrf_valid:
-            # this is validated by CsrfProtect
-            return True
-
-    def validate_csrf_data(self, data):
-        """Check if the csrf data is valid.
-
-        .. versionadded: 0.9.0
-
-        :param data: the csrf string to be validated.
-        """
-        return validate_csrf(data, self.SECRET_KEY, self.TIME_LIMIT)
-
     def is_submitted(self):
         """
         Checks if form has been submitted. The default case is if the HTTP
@@ -138,7 +117,7 @@ class Form(Form):
     def data(self):
         d = super(Form, self).data
         # https://github.com/lepture/flask-wtf/issues/208
-        if self.csrf_enabled:
+        if self.meta.csrf:
             d.pop('csrf_token')
         return d
 

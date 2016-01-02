@@ -8,16 +8,19 @@
     :copyright: (c) 2013 by Hsiaoming Yang.
 """
 
-import os
-import hmac
-import hashlib
-import time
+
 from flask import Blueprint
-from flask import current_app, session, request, abort
-from werkzeug.security import safe_str_cmp
-from ._compat import to_bytes, string_types
+from flask import  request, abort, current_app
+from ._compat import string_types
 
 from wtforms.csrf.session import SessionCSRF
+from wtforms.i18n import DummyTranslations
+from wtforms.validators import ValidationError
+
+from flask_wtf.form import Form
+
+from functools import partial
+
 try:
     from urlparse import urlparse
 except ImportError:
@@ -26,6 +29,42 @@ except ImportError:
 
 
 __all__ = ('generate_csrf', 'validate_csrf', 'CsrfProtect')
+
+
+def _generate_csrf(csrf_impl):
+    form = Form()
+    csrf_impl.form_meta=form.meta
+    return SessionCSRF.generate_csrf_token(csrf_impl, None)
+
+def _validate_csrf(csrf_impl, field):
+    form = Form()
+    csrf_impl.form_meta=form.meta
+
+    try:
+        SessionCSRF.validate_csrf_token(csrf_impl, None, field)
+    except ValidationError:
+        return False
+
+    return True
+
+class DummyField:
+    """
+    Implement a very small subset of WTFormsField to encapsulate csrf tokens if no field is present (e. g. AJAX)
+
+    """
+
+    def __init__(self, data):
+        self._translations = DummyTranslations()
+        self.data = data
+
+    def gettext(self, string):
+        """
+        Get a translation for the given message.
+        This proxies for the internal translations object.
+        :param string: A unicode string to be translated.
+        :return: A unicode string which is the translated output.
+        """
+        return self._translations.gettext(string)
 
 
 class CsrfProtect(object):
@@ -55,8 +94,15 @@ class CsrfProtect(object):
             self.init_app(app)
 
     def init_app(self, app):
+        
         self._app = app
-        app.jinja_env.globals['csrf_token'] = generate_csrf
+
+        self.csrf_impl = SessionCSRF()
+
+        self.generate_csrf = partial(_generate_csrf, self.csrf_impl)
+        self.validate_csrf = partial(_validate_csrf, self.csrf_impl)
+
+        app.jinja_env.globals['csrf_token'] = self.generate_csrf
         app.config.setdefault(
             'WTF_CSRF_HEADERS', ['X-CSRFToken', 'X-CSRF-Token']
         )
@@ -68,7 +114,7 @@ class CsrfProtect(object):
         # expose csrf_token as a helper in all templates
         @app.context_processor
         def csrf_token():
-            return dict(csrf_token=generate_csrf)
+            return dict(csrf_token=self.generate_csrf)
 
         @app.before_request
         def _csrf_protect():
@@ -106,19 +152,23 @@ class CsrfProtect(object):
             if key.endswith('csrf_token'):
                 csrf_token = request.form[key]
                 if csrf_token:
+                    if current_app.testing and not hasattr(csrf_token, "data"):
+                        csrf_token = DummyField(csrf_token)
                     return csrf_token
 
         for header_name in self._app.config['WTF_CSRF_HEADERS']:
             csrf_token = request.headers.get(header_name)
             if csrf_token:
-                return csrf_token
+                return DummyField(csrf_token)
         return None
 
     def protect(self):
         if request.method not in self._app.config['WTF_CSRF_METHODS']:
             return
 
-        if not validate_csrf(self._get_csrf_token()):
+        token = self._get_csrf_token()
+
+        if not token or not self.validate_csrf(token):
             reason = 'CSRF token missing or incorrect.'
             return self._error_response(reason)
 
