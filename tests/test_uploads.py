@@ -12,7 +12,7 @@ from flask_wtf import Form
 from flask_wtf.file import FileField
 from flask_wtf.file import file_required, file_allowed
 
-from .base import TestCase
+from base import TestCase
 
 
 class UploadSet(object):
@@ -170,7 +170,7 @@ class TestFileList(TestCase):
             assert len(request.files)  # the files have been added to the
                                        # request
 
-            f = BrokenForm(csrf_enabled=False)
+            f = BrokenForm(meta={"csrf": False})
 
             assert f.validate_on_submit()
             assert len(text_data) == len(f.text_fields)

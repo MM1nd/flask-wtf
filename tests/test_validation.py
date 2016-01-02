@@ -32,32 +32,6 @@ class TestValidateOnSubmit(TestCase):
         assert b'DANNY' in response.data
 
 
-class TestValidateWithoutSubmit(TestCase):
-
-    def test_unsubmitted_valid(self):
-        class obj:
-            name = "foo"
-
-        with self.app.test_request_context():
-            assert MyForm(obj=obj, csrf_enabled=False).validate()
-            fake_session = {}
-            t = MyForm(csrf_context=fake_session).generate_csrf_token(
-                fake_session
-            )
-            assert MyForm(
-                obj=obj, csrf_token=t,
-                csrf_context=fake_session).validate()
-
-
-class TestHiddenTag(TestCase):
-
-    def test_hidden_tag(self):
-
-        response = self.client.get("/hidden/")
-        assert to_unicode(response.data).count('type="hidden"') == 5
-        assert b'name="_method"' in response.data
-
-
 class TestCSRF(TestCase):
 
     def test_csrf_token(self):
@@ -114,9 +88,3 @@ class TestCSRF(TestCase):
             "csrf_token": csrf_token
         })
         assert response.data == b'OK'
-
-    def test_valid_csrf_data(self):
-        with self.app.test_request_context():
-            form = MyForm()
-            csrf_token = get_csrf_token(form.csrf_token())
-            assert form.validate_csrf_data(csrf_token)

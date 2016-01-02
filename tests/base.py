@@ -49,6 +49,7 @@ class TestCase(unittest.TestCase):
         app = Flask(__name__)
         app.testing = True
         app.secret_key = "secret"
+        app.config["WTF_HIDDEN_TAG"]="div"
 
         @app.route("/", methods=("GET", "POST"))
         def index():
@@ -67,18 +68,18 @@ class TestCase(unittest.TestCase):
         def simple():
             form = SimpleForm()
             form.validate()
-            assert form.csrf_enabled
+            assert form.meta.csrf
             assert not form.validate()
             return "OK"
 
         @app.route("/two_forms/", methods=("POST",))
         def two_forms():
             form = SimpleForm()
-            assert form.csrf_enabled
+            assert form.meta.csrf
             assert form.validate()
             assert form.validate()
             form2 = SimpleForm()
-            assert form2.csrf_enabled
+            assert form2.meta.csrf
             assert form2.validate()
             return "OK"
 

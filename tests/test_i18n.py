@@ -1,6 +1,6 @@
 from __future__ import with_statement
 
-from .base import TestCase, to_unicode
+from base import TestCase, to_unicode
 
 
 class TestI18NCase(TestCase):

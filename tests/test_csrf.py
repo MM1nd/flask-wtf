@@ -4,7 +4,6 @@ import re
 from flask import Blueprint
 from flask import render_template
 from flask_wtf.csrf import CsrfProtect
-from flask_wtf.csrf import validate_csrf, generate_csrf
 from base import TestCase, MyForm, to_unicode
 
 csrf_token_input = re.compile(
@@ -69,20 +68,32 @@ class TestCSRF(TestCase):
 
     def test_invalid_csrf2(self):
         # tests with bad token
-        response = self.client.post("/", data={
-            "name": "danny",
-            "csrf_token": "9999999999999##test"
-            # will work only if greater than time.time()
-        })
+        response = self.client.post("/", 
+                                    data=
+                                    {
+                                        "name": "danny"
+                                    },  
+                                    headers=
+                                    {
+                                        'X-CSRFToken': "9999999999999##test"
+                                        # will work only if greater than time.time()
+                                    }
+                                    )
         assert response.status_code == 400
 
     def test_invalid_secure_csrf3(self):
         # test with multiple separators
-        response = self.client.post("/", data={
-            "name": "danny",
-            "csrf_token": "1378915137.722##foo##bar##and"
-            # will work only if greater than time.time()
-        })
+        response = self.client.post("/", 
+                                    data=
+                                    {
+                                        "name": "danny"
+                                    },
+                                    headers=
+                                    {
+                                        'X-CSRFToken': "1378915137.722##foo##bar##and"
+                                        # will work only if greater than time.time()
+                                    }
+                                    )
         assert response.status_code == 400
 
     def test_valid_csrf(self):
@@ -249,17 +260,6 @@ class TestCSRF(TestCase):
         })
         assert b'DANNY' in response.data
 
-    def test_validate_csrf(self):
-        with self.app.test_request_context():
-            assert not validate_csrf('ff##dd')
-            csrf_token = generate_csrf()
-            assert validate_csrf(csrf_token)
-
-    def test_validate_not_expiring_csrf(self):
-        with self.app.test_request_context():
-            csrf_token = generate_csrf(time_limit=False)
-            assert validate_csrf(csrf_token, time_limit=False)
-
     def test_csrf_token_helper(self):
         @self.app.route("/token")
         def withtoken():
@@ -283,29 +283,3 @@ class TestCSRF(TestCase):
 
         response = self.client.get('/token')
         assert b'#' in response.data
-
-    def test_csrf_custom_token_key(self):
-        with self.app.test_request_context():
-            # Generate a normal and a custom CSRF token
-            default_csrf_token = generate_csrf()
-            custom_csrf_token = generate_csrf(token_key='oauth_state')
-
-            # Verify they are different due to using different session keys
-            assert default_csrf_token != custom_csrf_token
-
-            # However, the custom key can validate as well
-            assert validate_csrf(custom_csrf_token, token_key='oauth_state')
-
-    def test_csrf_url_safe(self):
-        with self.app.test_request_context():
-            # Generate a normal and URL safe CSRF token
-            default_csrf_token = generate_csrf()
-            url_safe_csrf_token = generate_csrf(url_safe=True)
-
-            # Verify they are not the same and the URL one is truly URL safe
-            assert default_csrf_token != url_safe_csrf_token
-            assert '#' not in url_safe_csrf_token
-            assert re.match(r'^[a-f0-9]+--[a-f0-9]+$', url_safe_csrf_token)
-
-            # Verify we can validate our URL safe key
-            assert validate_csrf(url_safe_csrf_token, url_safe=True)

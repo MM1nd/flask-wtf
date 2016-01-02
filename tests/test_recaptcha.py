@@ -1,6 +1,6 @@
 from __future__ import with_statement
 
-from .base import TestCase
+from base import TestCase
 from flask import json
 from flask import Flask, render_template
 from flask_wtf import Form
@@ -19,12 +19,13 @@ class RecaptchaFrom(Form):
 class TestRecaptcha(TestCase):
     def create_app(self):
         app = Flask(__name__)
+        #app.testing="True"
         app.secret_key = "secret"
         app.config['RECAPTCHA_PUBLIC_KEY'] = RECAPTCHA_PUBLIC_KEY
         app.config['RECAPTCHA_PRIVATE_KEY'] = RECAPTCHA_PRIVATE_KEY
 
         @app.route("/", methods=("GET", "POST"))
-        def inex():
+        def index():
             form = RecaptchaFrom(csrf_enabled=False)
             if form.validate_on_submit():
                 return 'OK'
