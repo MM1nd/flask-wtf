@@ -8,7 +8,7 @@
     :copyright: (c) 2013 by Hsiaoming Yang.
 """
 
-
+from pdb import set_trace
 from flask import Blueprint
 from flask import  request, abort, current_app
 from ._compat import string_types
@@ -145,17 +145,14 @@ class CsrfProtect(object):
             self.protect()
 
     def _get_csrf_token(self):
-        # find the ``csrf_token`` field in the subitted form
+        # find the ``csrf_token`` field in the submitted form
         # if the form had a prefix, the name will be
         # ``{prefix}-csrf_token``
         for key in request.form:
             if key.endswith('csrf_token'):
                 csrf_token = request.form[key]
                 if csrf_token:
-                    if current_app.testing and not hasattr(csrf_token, "data"):
-                        csrf_token = DummyField(csrf_token)
-                    return csrf_token
-
+                    return  DummyField(csrf_token)
         for header_name in self._app.config['WTF_CSRF_HEADERS']:
             csrf_token = request.headers.get(header_name)
             if csrf_token:

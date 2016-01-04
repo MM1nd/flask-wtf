@@ -23,7 +23,12 @@ class HiddenTag(HiddenInput):
 
     def __call__(self, field, **kwargs):
 
+        kwargs["data_abide_ignore"]=True
+
         actual_input = super(HiddenTag, self).__call__(field, **kwargs)
+
+        #WTForms currently does not play well with hyphens in attribute names
+        actual_input = actual_input.replace("abide_ignore", "abide-ignore")
 
         name = current_app.config.get('WTF_HIDDEN_TAG', None)
         
